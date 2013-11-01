@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestParseHostAlias(t *testing.T) {
 	input := "flower: 192.168.255.199 is HOST1"
 	params := map[string]string{
 		"ip":   "192.168.255.199",
@@ -16,7 +16,20 @@ func TestParse(t *testing.T) {
 	} else {
 		assertParsedCommand(t, pc, "host_alias", params, input)
 	}
+}
 
+func TestParseService(t *testing.T) {
+	input := "flower: HOST1 offers http"
+	params := map[string]string{
+		"service": "http",
+		"host":    "HOST1",
+	}
+	pc := Parse(input)
+	if pc == nil {
+		t.Errorf("Failed to parse '%s'", input)
+	} else {
+		assertParsedCommand(t, pc, "host_service", params, input)
+	}
 }
 
 func assertParsedCommand(t *testing.T, pc *ParsedCommand, command string, params map[string]string, input string) {
