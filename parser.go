@@ -9,8 +9,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-
-//	"strings"
 )
 
 type Parser struct {
@@ -71,21 +69,23 @@ func (parser *Parser) SummaryMarkup() []byte {
 }
 
 func (parser *Parser) ProcessHostAliasCommands() {
-	for c := parser.commands.Front(); c != nil && c.Value.(*ParsedCommand).command == "host_alias"; c = c.Next() {
-		pc := c.Value.(*ParsedCommand)
-		fmt.Printf("Checking command :%+v\n", pc)
-		intf, err := net.InterfaceAddrs()
+	for c := parser.commands.Front(); c != nil; c = c.Next() {
+		pc, ok := c.Value.(*HostAliasCommand)
+		if ok {
+			fmt.Printf("Checking command :%+v\n", pc)
+			intf, err := net.InterfaceAddrs()
 
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			for _, ip := range intf {
-				ipnet, ok := ip.(*net.IPNet)
-				if ok {
-					//fmt.Println("Checking IP :", ipnet.IP.String())
-					if pc.params["ip"] == ipnet.IP.String() {
-						fmt.Printf("\tLocal host matches IP %s, now aliased to %s\n", ipnet.IP.String(), pc.params["host"])
-						parser.aliases.PushBack(pc.params["host"])
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				for _, ip := range intf {
+					ipnet, ok := ip.(*net.IPNet)
+					if ok {
+						if pc.ip == ipnet.IP.String() {
+							fmt.Printf("\tLocal host matches IP %s, now aliased to %s\n", ipnet.IP.String(), pc.host)
+							pc.isLocalHost = true
+							parser.aliases.PushBack(pc.host)
+						}
 					}
 				}
 			}
@@ -101,7 +101,7 @@ func (parser *Parser) ProcessAllCommands() {
 
 func (parser *Parser) CurrentHostIs(host string) bool {
 	for e := parser.aliases.Front(); e != nil; e = e.Next() {
-		if host == *(e.Value.(*string)) {
+		if host == e.Value.(string) {
 			return true
 		}
 	}
@@ -109,22 +109,48 @@ func (parser *Parser) CurrentHostIs(host string) bool {
 }
 
 func (parser *Parser) ProcessHostServiceCommands() {
+	fmt.Println("\nProcessHostServiceCommands.")
 	// Process all host_service commands
 	for c := parser.commands.Front(); c != nil; c = c.Next() {
-		pc := c.Value.(*ParsedCommand)
-		if pc.command == "host_service" {
-			if parser.CurrentHostIs(pc.params["host"]) {
-				fmt.Println("Check command :", pc)
-			}
+		pc, ok := c.Value.(*HostServiceCommand)
+
+		if ok && parser.CurrentHostIs(pc.host) {
+			pc.isLocalHost = true
+			fmt.Println("Check command :", pc)
+			pc.available = parser.ServiceRunning(pc)
+			fmt.Printf("\tHost service is running: %+v\n", pc)
 		}
 	}
 }
 
+// Determine if a port is open on
+func (parser *Parser) ServiceRunning(c *HostServiceCommand) bool {
+	var conn net.Conn
+	conn, c.err = net.Dial("tcp", c.host+":"+strconv.Itoa(c.port))
+	if c.err == nil {
+		conn.Close()
+		return true
+	}
+	return false
+}
+
 // The result of a parsed command
-type ParsedCommand struct {
-	command   string
-	params    map[string]string
-	satisfied bool
+type FlowerCommand interface {
+}
+
+type HostAliasCommand struct {
+	ip          string
+	host        string
+	isLocalHost bool
+}
+
+type HostServiceCommand struct {
+	host        string
+	isLocalHost bool
+	service     string
+	port        int
+	available   bool
+	err         error
 }
 
 // Map from command name to a regular expression, that contains named
@@ -141,8 +167,8 @@ var CommandRegex = map[string]*regexp.Regexp{
 var HostIp = map[string]string{}
 
 // Parse a string, find a matching command, or nil
-func Parse(line string) *ParsedCommand {
-	//fmt.Printf("Parse : %s length  %d\n",line, len(line))
+func Parse(line string) FlowerCommand {
+	fmt.Printf("Parse : %s length  %d\n", line, len(line))
 	for command, regex := range CommandRegex {
 		//fmt.Printf("Is a  %s ? %t\n",command, regex.MatchString(line))
 		if regex.MatchString(line) {
@@ -152,65 +178,48 @@ func Parse(line string) *ParsedCommand {
 				params[key] = regex.ReplaceAllString(line, "${"+key+"}")
 			}
 			//fmt.Printf("Got params %q\n", params)
-			return BuildCommand(command, params)
+			cmd, err := BuildCommand(command, params)
+			if err != nil {
+				fmt.Println("ERROR: Parsing", err)
+			} else {
+				fmt.Printf("Parsing match %+v\n", cmd)
+			}
+			return cmd
+
 		}
 	}
 	return nil
 }
 
 // Mappings from Services -> default port
-var ServicePort = map[string]string{
-	"http": "80",
+var ServicePort = map[string]int{
+	"http": 80,
 }
 
 // Build a ParsedCommand
-func BuildCommand(command string, params map[string]string) *ParsedCommand {
+func BuildCommand(command string, params map[string]string) (FlowerCommand, error) {
 	switch {
 	case command == "host_service":
+		var port int
+		var err error
 		if params["port"] == "" {
-			params["port"] = ServicePort[params["service"]]
+			port = ServicePort[params["service"]]
+		} else {
+			// check port is a int
+			port, err = strconv.Atoi(params["port"])
 		}
-		// check port is a int
-		var _, err = strconv.Atoi(params["port"])
 		if err == nil {
-			return &ParsedCommand{
-				command: command,
-				params:  params,
-			}
+			return &HostServiceCommand{
+				host:    params["host"],
+				service: params["service"],
+				port:    port,
+			}, nil
 		}
-		return nil
+	case command == "host_alias":
+		return &HostAliasCommand{
+			ip:   params["ip"],
+			host: params["host"],
+		}, nil
 	}
-	return &ParsedCommand{
-		command: command,
-		params:  params,
-	}
-
-}
-
-// Evaluate a command
-func RunCommand(pc *ParsedCommand) {
-	switch {
-	case pc.command == "host_alias":
-		HostIp[pc.params["host"]] = pc.params["ip"]
-		pc.satisfied = true
-	case pc.command == "host_service":
-		if RunningOn(pc.params["alias"]) {
-			port, _ := strconv.Atoi(pc.params["port"])
-			if PortOpen("127.0.0.1", port) {
-				pc.satisfied = true
-			} else {
-				pc.satisfied = false
-			}
-		}
-	}
-}
-
-// Determine if the program is running on a given host (alias)
-func RunningOn(alias string) bool {
-	return true
-}
-
-// Determine if a port is open on
-func PortOpen(ip string, port int) bool {
-	return true
+	return nil, nil
 }
