@@ -13,7 +13,7 @@ func TestParseService(t *testing.T) {
 	input := "flower: HOST1 offers http"
 	AssertEqualsHostService(HostServiceCommand { host: "HOST1", service: "http", port: 80,}, input, t)
 
-	input = "flower: HOST1 offers http 8080"
+	input = "flower: HOST1 offers http:8080"
 	AssertEqualsHostService(HostServiceCommand { host: "HOST1", service: "http", port: 8080,}, input, t)
 }
 

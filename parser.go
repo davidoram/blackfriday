@@ -196,7 +196,7 @@ var CommandRegex = map[string]*regexp.Regexp{
 	// <ip> is <alias
 	"host_alias": regexp.MustCompile(`^flower:\s*(?P<ip>[0-9\.\*]+)\s*is\s*(?P<host>\w+)\s*$`),
 	// <alias> offers <service>
-	"host_service": regexp.MustCompile(`^flower:\s*(?P<host>\w+)\s*offers\s*(?P<service>\w+)\s*(?P<port>\d+)?\s*$`),
+	"host_service": regexp.MustCompile(`^flower:\s*(?P<host>\w+)\s*offers\s*(?P<service>\w+)(:(?P<port>\d+))?\s*$`),
 }
 
 // Map of host_alias -> ip address wildcard
