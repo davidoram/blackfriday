@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"container/list"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -17,6 +18,7 @@ type Parser struct {
 	errors   *list.List
 	log      *os.File
 	aliases  *list.List
+	aliasToIPNet map[string] *net.IPNet
 }
 
 // The FlowerParser evaluates code blocks for flower directives,
@@ -28,14 +30,14 @@ func NewParser() *Parser {
 		errors:   list.New(),
 		// List of aliases this hostname is also known as
 		aliases: list.New(),
+		aliasToIPNet : make( map[string] *net.IPNet),
 	}
 	// resolve hostname
 	var err error
 	parser.hostname, err = os.Hostname()
 	if err != nil {
-		parser.errors.PushBack("Unable to resolve hostname")
+		parser.errors.PushBack(errors.New("Unable to resolve hostname"))
 	}
-
 	return &parser
 }
 
@@ -47,7 +49,7 @@ func (parser *Parser) EvaluateCode(text []byte) []byte {
 	for scanner.Scan() {
 		line := scanner.Text()
 		buffer.WriteString(line)
-		command := Parse(line)
+		command := parser.Parse(line)
 		if command != nil {
 			parser.commands.PushBack(command)
 		}
@@ -91,6 +93,7 @@ func (parser *Parser) ProcessHostAliasCommands() {
 						if pc.ip == ipnet.IP.String() {
 							pc.isLocalHost = true
 							parser.aliases.PushBack(pc.host)
+							parser.aliasToIPNet[pc.host] = ipnet
 						}
 					}
 				}
@@ -121,13 +124,14 @@ func (parser *Parser) TotalErrors() int {
 	errors += parser.errors.Len()
 	return errors
 }
+
 // Print a summary of findings
 func (parser *Parser) PrintSummary() {
 	fmt.Println("=======================================")
 	fmt.Println("Flower summary")
 	fmt.Println("--------------\n")
 	fmt.Println("Host\n----")
-	fmt.Printf("hostname: %s\n",parser.hostname)
+	fmt.Printf("hostname: %s\n", parser.hostname)
 	fmt.Printf("aliases:  ")
 	for e := parser.aliases.Front(); e != nil; e = e.Next() {
 		if e != parser.aliases.Front() {
@@ -135,6 +139,12 @@ func (parser *Parser) PrintSummary() {
 		}
 		fmt.Printf(e.Value.(string))
 	}
+	fmt.Printf("\n\nAlias to IPAddr\n--------------\n")
+	fmt.Printf("%-10s : %-20s\n", "Alias", "IP Address")
+	for k,v := range(parser.aliasToIPNet) {
+		fmt.Printf("%-10s : %-20s\n", k, v.IP.String())
+	}
+
 	fmt.Printf("\n\nLocal Services\n--------------\n")
 	fmt.Printf("%-10s : %-5s : %5s\n", "Name", "Port", "Available")
 	for c := parser.commands.Front(); c != nil; c = c.Next() {
@@ -143,11 +153,18 @@ func (parser *Parser) PrintSummary() {
 			fmt.Printf("%-10s : %-5d : %v\n", pc.service, pc.port, pc.available)
 		}
 	}
-	fmt.Printf("\n\nSummary\n-------\n")
-	fmt.Printf("Total errors: %d\n",parser.TotalErrors())
-	
-}
 
+	if parser.errors.Len() > 0 {
+		fmt.Printf("\n\nErrors\n------\n")
+		for e := parser.errors.Front(); e != nil; e = e.Next() {
+			fmt.Printf("Err is :%v\n", e.Value)
+		}
+	}
+
+	fmt.Printf("\n\nSummary\n-------\n")
+	fmt.Printf("Total errors: %d\n", parser.TotalErrors())
+
+}
 
 func (parser *Parser) CurrentHostIs(host string) bool {
 	for e := parser.aliases.Front(); e != nil; e = e.Next() {
@@ -158,16 +175,18 @@ func (parser *Parser) CurrentHostIs(host string) bool {
 	return false
 }
 
-
 // Determine if a port is open on
 func (parser *Parser) ServiceRunning(c *HostServiceCommand) bool {
+	hostPort := net.JoinHostPort(parser.aliasToIPNet[c.host].IP.String(), strconv.Itoa(c.port)) 
+	fmt.Println("Calling Dial..."+ hostPort)
 	var conn net.Conn
-	conn, c.err = net.Dial("tcp", c.host+":"+strconv.Itoa(c.port))
-	if c.err == nil {
-		conn.Close()
-		return true
+	conn, c.err = net.Dial("tcp", hostPort)
+	if c.err != nil {
+		parser.errors.PushBack(c.err)
+		return false
 	}
-	return false
+	conn.Close()
+	return true
 }
 
 // The result of a parsed command
@@ -203,7 +222,7 @@ var CommandRegex = map[string]*regexp.Regexp{
 var HostIp = map[string]string{}
 
 // Parse a string, find a matching command, or nil
-func Parse(line string) FlowerCommand {
+func (parser *Parser) Parse(line string) FlowerCommand {
 	for command, regex := range CommandRegex {
 		//fmt.Printf("Is a  %s ? %t\n",command, regex.MatchString(line))
 		if regex.MatchString(line) {
@@ -215,9 +234,7 @@ func Parse(line string) FlowerCommand {
 			//fmt.Printf("Got params %q\n", params)
 			cmd, err := BuildCommand(command, params)
 			if err != nil {
-				fmt.Println("ERROR: Parsing", err)
-			} else {
-				//fmt.Printf("Parsing match %+v\n", cmd)
+				parser.errors.PushBack(err)
 			}
 			return cmd
 
