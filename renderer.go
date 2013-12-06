@@ -2,32 +2,34 @@ package blackfriday
 
 import (
 	"bytes"
+	"github.com/davidoram/flower"
 )
 
 // Flower is a type that implements the Renderer interface
 //
 // Do not create this directly, instead use the FlowerRenderer function.
 type Flower struct {
-	renderer Renderer // the renderer that we are wrapping,
-	parser   *Parser              // parses code blocks for flower directives
+	renderer    Renderer                    // the renderer that we are wrapping,
+	interpreter *flower.StandardInterpreter // parses code blocks for flower directives
 }
 
 // WrappedRenderer creates and configures an Renderer object, which
 // satisfies the Renderer interface,  intercepts calls to parse code
-// and interprets any embedded flower commands, returning the output 
+// and interprets any embedded flower commands, returning the output
 // as markdown which is passed on to the wrapped
 // Renderer which performs the end user rendering
 func WrappedRenderer(wrapped_renderer Renderer) Renderer {
 
 	return &Flower{
-		renderer: wrapped_renderer,
-		parser:   NewParser(),
+		renderer:    wrapped_renderer,
+		interpreter: flower.NewInterpreter(),
 	}
 }
 
 // block-level callbacks
 func (options *Flower) BlockCode(out *bytes.Buffer, text []byte, lang string) {
-	options.renderer.BlockCode(out, options.parser.EvaluateCode(text), lang)
+	options.interpreter.EvaluateCode(text)
+	options.renderer.BlockCode(out, text, lang)
 }
 
 func (options *Flower) BlockQuote(out *bytes.Buffer, text []byte) {
@@ -83,7 +85,8 @@ func (options *Flower) AutoLink(out *bytes.Buffer, link []byte, kind int) {
 }
 
 func (options *Flower) CodeSpan(out *bytes.Buffer, text []byte) {
-	options.renderer.CodeSpan(out, options.parser.EvaluateCode(text))
+	options.interpreter.EvaluateCode(text)
+	options.renderer.CodeSpan(out, text)
 }
 func (options *Flower) DoubleEmphasis(out *bytes.Buffer, text []byte) {
 	options.renderer.DoubleEmphasis(out, text)
@@ -126,6 +129,6 @@ func (options *Flower) DocumentHeader(out *bytes.Buffer) {
 	options.renderer.DocumentHeader(out)
 }
 func (options *Flower) DocumentFooter(out *bytes.Buffer) {
-	options.renderer.NormalText(out, options.parser.SummaryMarkup())
+	options.renderer.Entity(out, options.interpreter.SummaryReport())
 	options.renderer.DocumentFooter(out)
 }
