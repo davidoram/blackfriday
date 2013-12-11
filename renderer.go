@@ -2,7 +2,7 @@ package blackfriday
 
 import (
 	"bytes"
-	"github.com/davidoram/flower"
+	"github.com/davidoram/blackfriday/flower"
 )
 
 // Flower is a type that implements the Renderer interface
