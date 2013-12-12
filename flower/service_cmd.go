@@ -1,10 +1,10 @@
 package flower
 
 import (
-//	"fmt"
+	//	"fmt"
 	"github.com/anvie/port-scanner"
 	"net"
-//	"strings"
+	//	"strings"
 	"strconv"
 )
 
@@ -79,14 +79,37 @@ func (cmd *ServiceCommand) Execute() {
 }
 
 func (cmd *ServiceCommand) String() string {
-	str := cmd.host + "/" + cmd.service + "/" + strconv.Itoa(cmd.port) + " "
-	switch cmd.match {
-		case MATCH_HOST: 		str = str + "MATCH_HOST"
-		case MATCH_CALLER:  	str = str + "MATCH_CALLER"
-		case NO_MATCH:			str = str + "NO_MATCH"
+	str := "host:" + cmd.host
+	if cmd.service == "" {
+		str += ", service:" + cmd.service
 	}
-	
-	return str;
+	str += ", port:" + strconv.Itoa(cmd.port)
+	if cmd.caller != "" {
+		str += ", caller:" + cmd.caller
+	}
+	str += ", match:"
+	switch cmd.match {
+	case MATCH_HOST:
+		str += "MATCH_HOST"
+	case MATCH_CALLER:
+		str += "MATCH_CALLER"
+	case NO_MATCH:
+		str += "NO_MATCH"
+	}
+	str += ", result:"
+	switch cmd.result {
+	case ERROR:
+		str += "ERROR"
+	case OK:
+		str += "OK"
+	case FAIL:
+		str += "FAIL"
+	}
+	if cmd.err != nil {
+		str += cmd.err.Error()
+	}
+
+	return str
 }
 
 // Return true if host name passed in, is the local host machine, otherwise returns false

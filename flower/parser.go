@@ -19,17 +19,19 @@ var CommandRegex = map[string]*regexp.Regexp{
 	// <ip> is <alias
 	//"host_alias": regexp.MustCompile(`^flower:\s*(?P<ip>[0-9\.\*]+)\s*is\s*(?P<host>\w+)\s*$`),
 	// <alias> offers <service>:port
-	"local_service": regexp.MustCompile(`^flower:\s*(?P<host>\w+)\s*offers\s*(?P<service>\w+)(:(?P<port>\d+))?\s*$`),
+	"local_service": regexp.MustCompile(`^flower:\s*(?P<host>\S+)\s*offers\s*(?P<service>\w+)(:(?P<port>\d+))?\s*$`),
 	// <alias> uses <service>:port at <alias>
-	"remote_service": regexp.MustCompile(`^flower:\s*(?P<local>\w+)\s*uses\s*(?P<service>\w+)(:(?P<port>\d+))?\s+(at)?\s+(?P<remote>\w+)\s*$`),
+	"remote_service": regexp.MustCompile(`^flower:\s*(?P<local>\S+)\s*uses\s*(?P<service>\w+)(:(?P<port>\d+))?\s+(at)?\s+(?P<remote>\S+)\s*$`),
 }
 
 // Parse a string, find a matching command, or nil
 func Parse(line string) Command {
-	fmt.Println(line)
+	fmt.Println("Parsing: " + line)
 	for command, regex := range CommandRegex {
+	fmt.Print("Matches " + command + " : ")
 		//fmt.Printf("Is a  %s ? %t\n",command, regex.MatchString(line))
 		if regex.MatchString(line) {
+			fmt.Println("Yes")
 			// Turn parenthesized sub expressions into a map[string]string
 			params := make(map[string]string)
 			for _, key := range regex.SubexpNames() {
@@ -37,6 +39,8 @@ func Parse(line string) Command {
 			}
 			//fmt.Printf("Got params %q\n", params)
 			return BuildCommand(command, params)
+		} else {
+			fmt.Println("No")
 		}
 	}
 	return nil
