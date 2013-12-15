@@ -17,9 +17,10 @@ const (
 
 // Constants used to indicate command success
 const (
-	ERROR = 0
-	OK    = 1
-	FAIL  = 2
+	NO_ANSWER = 0
+	ERROR     = 1
+	OK        = 2
+	FAIL      = 3
 )
 
 type ServiceCommand struct {
@@ -98,6 +99,8 @@ func (cmd *ServiceCommand) String() string {
 	}
 	str += ", result:"
 	switch cmd.result {
+	case NO_ANSWER:
+		str += "NO_ANSWER"
 	case ERROR:
 		str += "ERROR"
 	case OK:
