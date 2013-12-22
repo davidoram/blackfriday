@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"container/list"
 	"fmt"
-	"strings"
+//	"strings"
 )
 
 type Interpreter interface {
@@ -28,16 +28,28 @@ func NewInterpreter() *StandardInterpreter {
 }
 
 // Evaluate a chunk of Markdown code. If it contains flower directives then evaluate it
-func (interpreter *StandardInterpreter) EvaluateCode(markdown_code []byte) {
-	lines := strings.Split(string(markdown_code[:]), "\n")
-	for _, line := range lines {
-		command := Parse(line)
-		if command != nil {
-			interpreter.commands.PushBack(command)
-			command.Execute()
-		}
+func (interpreter *StandardInterpreter) EvaluateCode(line string) Command {
+	command := Parse(line)
+	if command != nil {
+		interpreter.commands.PushBack(command)
+		command.Execute()
+	}
+	return command
+}
+
+// Surround HTML code with tags that can be used to identify and style the flower command contained within
+func (interpreter *StandardInterpreter) CommandTagStart(out *bytes.Buffer, command Command) {
+	if command != nil {
+		out.WriteString("<div cl=\""  + command.HtmlId() + "\">")
 	}
 }
+
+func (interpreter *StandardInterpreter) CommandTagEnd(out *bytes.Buffer, command Command) {
+	if command != nil {
+		out.WriteString("</div>")
+	}
+}
+
 
 // Return a summary of findings
 func (interpreter *StandardInterpreter) SummaryReport() []byte {

@@ -1,7 +1,7 @@
 package flower
 
 import (
-	"fmt"
+	//"fmt"
 	"regexp"
 	"strconv"
 )
@@ -26,12 +26,12 @@ var CommandRegex = map[string]*regexp.Regexp{
 
 // Parse a string, find a matching command, or nil
 func Parse(line string) Command {
-	fmt.Println("Parsing: " + line)
+	//fmt.Println("Parsing: " + line)
 	for command, regex := range CommandRegex {
-	fmt.Print("Matches " + command + " : ")
+	//fmt.Print("Matches " + command + " : ")
 		//fmt.Printf("Is a  %s ? %t\n",command, regex.MatchString(line))
 		if regex.MatchString(line) {
-			fmt.Println("Yes")
+			//fmt.Println("Yes")
 			// Turn parenthesized sub expressions into a map[string]string
 			params := make(map[string]string)
 			for _, key := range regex.SubexpNames() {
@@ -40,7 +40,7 @@ func Parse(line string) Command {
 			//fmt.Printf("Got params %q\n", params)
 			return BuildCommand(command, params)
 		} else {
-			fmt.Println("No")
+			//fmt.Println("No")
 		}
 	}
 	return nil
@@ -59,12 +59,7 @@ func BuildCommand(command string, params map[string]string) Command {
 			port, err = strconv.Atoi(params["port"])
 		}
 		if err == nil {
-			return &ServiceCommand{
-				host:    params["host"],
-				service: params["service"],
-				port:    port,
-				caller:  params["host"],
-			}
+			return NewServiceCommand(params["host"],params["service"], port, params["host"])
 		}
 	case command == "remote_service":
 		var port int
@@ -76,12 +71,7 @@ func BuildCommand(command string, params map[string]string) Command {
 			port, err = strconv.Atoi(params["port"])
 		}
 		if err == nil {
-			return &ServiceCommand{
-				host:    params["remote"],
-				service: params["service"],
-				port:    port,
-				caller:  params["local"],
-			}
+			return NewServiceCommand(params["remote"],params["service"], port, params["local"])
 		}
 	}
 	return nil

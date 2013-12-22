@@ -168,7 +168,10 @@ implements the following extensions:
     becomes `<sup>4</sup>&frasl;<sub>5</sub>`, which renders as
     <sup>4</sup>&frasl;<sub>5</sub>.
 
-
+*   **Flower processing**, whereby code blocks containing lines that 
+    start with the syntax `flower:` are evaluated as network specifications 
+    to be tested if the `--flower` command line option has been included. 
+  
 LaTeX Output
 ------------
 

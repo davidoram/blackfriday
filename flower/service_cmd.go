@@ -23,6 +23,8 @@ const (
 	FAIL      = 3
 )
 
+var nextHtmlId = 1
+
 type ServiceCommand struct {
 
 	// Does this command match this host. See constants
@@ -41,6 +43,26 @@ type ServiceCommand struct {
 
 	// If an error occurs store it here
 	err error
+	
+	// HTML id
+	htmlId string
+}
+
+func NewServiceCommand(host string, service string, port int, caller string) *ServiceCommand {
+	cmd := new(ServiceCommand)
+	cmd.match = NO_MATCH
+	cmd.result = NO_ANSWER
+	cmd.host = host
+	cmd.service = service
+	cmd.port = port
+	cmd.caller = caller
+	cmd.htmlId = "Flower-" + strconv.Itoa(nextHtmlId)
+	nextHtmlId += 1
+	return cmd
+}
+
+func (cmd *ServiceCommand) HtmlId() string {
+	return cmd.htmlId
 }
 
 func (cmd *ServiceCommand) Execute() {

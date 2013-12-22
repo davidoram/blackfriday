@@ -200,15 +200,23 @@ func (options *Html) HRule(out *bytes.Buffer) {
 	out.WriteString(options.closeTag)
 }
 
-func (options *Html) BlockCode(out *bytes.Buffer, text []byte, lang string) {
+func (options *Html) BlockCodeStart(out *bytes.Buffer, text []byte, lang string) {
 	if options.flags&HTML_GITHUB_BLOCKCODE != 0 {
-		options.BlockCodeGithub(out, text, lang)
+		options.BlockCodeGithubStart(out, text, lang)
 	} else {
-		options.BlockCodeNormal(out, text, lang)
+		options.BlockCodeNormalStart(out, text, lang)
 	}
 }
 
-func (options *Html) BlockCodeNormal(out *bytes.Buffer, text []byte, lang string) {
+func (options *Html) BlockCodeBody(out *bytes.Buffer, text []byte, lang string) {
+	options.CodeSpanBody(out, text)
+}
+
+func (options *Html) BlockCodeEnd(out *bytes.Buffer, text []byte, lang string) {
+	out.WriteString("</code></pre>\n")
+}
+
+func (options *Html) BlockCodeNormalStart(out *bytes.Buffer, text []byte, lang string) {
 	doubleSpace(out)
 
 	// parse out the language names/classes
@@ -235,8 +243,6 @@ func (options *Html) BlockCodeNormal(out *bytes.Buffer, text []byte, lang string
 		out.WriteString("\">")
 	}
 
-	attrEscape(out, text)
-	out.WriteString("</code></pre>\n")
 }
 
 // GitHub style code block:
@@ -255,7 +261,7 @@ func (options *Html) BlockCodeNormal(out *bytes.Buffer, text []byte, lang string
 // Note that we only generate HTML for the first specifier.
 // E.g.
 //              ~~~~ {.python .numbered}        =>      <pre lang="python"><code>
-func (options *Html) BlockCodeGithub(out *bytes.Buffer, text []byte, lang string) {
+func (options *Html) BlockCodeGithubStart(out *bytes.Buffer, text []byte, lang string) {
 	doubleSpace(out)
 
 	// parse out the language name
@@ -277,9 +283,6 @@ func (options *Html) BlockCodeGithub(out *bytes.Buffer, text []byte, lang string
 	if count == 0 {
 		out.WriteString("<pre><code>")
 	}
-
-	attrEscape(out, text)
-	out.WriteString("</code></pre>\n")
 }
 
 func (options *Html) BlockQuote(out *bytes.Buffer, text []byte) {
@@ -412,9 +415,15 @@ func (options *Html) AutoLink(out *bytes.Buffer, link []byte, kind int) {
 	out.WriteString("</a>")
 }
 
-func (options *Html) CodeSpan(out *bytes.Buffer, text []byte) {
+func (options *Html) CodeSpanStart(out *bytes.Buffer, text []byte) {
 	out.WriteString("<code>")
+}
+
+func (options *Html) CodeSpanBody(out *bytes.Buffer, text []byte) {
 	attrEscape(out, text)
+}
+
+func (options *Html) CodeSpanEnd(out *bytes.Buffer, text []byte) {
 	out.WriteString("</code>")
 }
 

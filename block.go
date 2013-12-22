@@ -625,7 +625,9 @@ func (p *parser) fencedCode(out *bytes.Buffer, data []byte) int {
 		syntax = *lang
 	}
 
-	p.r.BlockCode(out, work.Bytes(), syntax)
+	p.r.BlockCodeStart(out, work.Bytes(), syntax)
+	p.r.BlockCodeBody(out, work.Bytes(), syntax)
+	p.r.BlockCodeEnd(out, work.Bytes(), syntax)
 
 	return beg
 }
@@ -915,7 +917,9 @@ func (p *parser) code(out *bytes.Buffer, data []byte) int {
 
 	work.WriteByte('\n')
 
-	p.r.BlockCode(out, work.Bytes(), "")
+	p.r.BlockCodeStart(out, work.Bytes(), "")
+	p.r.BlockCodeBody(out, work.Bytes(), "")
+	p.r.BlockCodeEnd(out, work.Bytes(), "")
 
 	return i
 }

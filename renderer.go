@@ -2,7 +2,9 @@ package blackfriday
 
 import (
 	"bytes"
+	//"fmt"
 	"github.com/davidoram/blackfriday/flower"
+	"strings"
 )
 
 // Flower is a type that implements the Renderer interface
@@ -27,9 +29,22 @@ func WrappedRenderer(wrapped_renderer Renderer) Renderer {
 }
 
 // block-level callbacks
-func (options *Flower) BlockCode(out *bytes.Buffer, text []byte, lang string) {
-	options.interpreter.EvaluateCode(text)
-	options.renderer.BlockCode(out, text, lang)
+func (options *Flower) BlockCodeStart(out *bytes.Buffer, text []byte, lang string) {
+	options.renderer.BlockCodeStart(out, text, lang)
+}
+
+func (options *Flower) BlockCodeBody(out *bytes.Buffer, text []byte, lang string) {
+	lines := strings.Split(string(text[:]), "\n")
+	for _, line := range lines {
+		command := options.interpreter.EvaluateCode(line)
+		options.interpreter.CommandTagStart(out, command)
+		options.renderer.BlockCodeBody(out, []byte(line), lang)
+		options.interpreter.CommandTagEnd(out, command)
+	}
+}
+
+func (options *Flower) BlockCodeEnd(out *bytes.Buffer, text []byte, lang string) {
+	options.renderer.BlockCodeEnd(out, text, lang)
 }
 
 func (options *Flower) BlockQuote(out *bytes.Buffer, text []byte) {
@@ -84,10 +99,24 @@ func (options *Flower) AutoLink(out *bytes.Buffer, link []byte, kind int) {
 	options.renderer.AutoLink(out, link, kind)
 }
 
-func (options *Flower) CodeSpan(out *bytes.Buffer, text []byte) {
-	options.interpreter.EvaluateCode(text)
-	options.renderer.CodeSpan(out, text)
+func (options *Flower) CodeSpanStart(out *bytes.Buffer, text []byte) {
+	options.renderer.CodeSpanStart(out, text)
 }
+
+func (options *Flower) CodeSpanBody(out *bytes.Buffer, text []byte) {
+	lines := strings.Split(string(text[:]), "\n")
+	for _, line := range lines {
+		command := options.interpreter.EvaluateCode(line)
+		options.interpreter.CommandTagStart(out, command)
+		options.renderer.CodeSpanBody(out, []byte(line))
+		options.interpreter.CommandTagEnd(out, command)
+	}
+}
+
+func (options *Flower) CodeSpanEnd(out *bytes.Buffer, text []byte) {
+	options.renderer.CodeSpanStart(out, text)
+}
+
 func (options *Flower) DoubleEmphasis(out *bytes.Buffer, text []byte) {
 	options.renderer.DoubleEmphasis(out, text)
 }

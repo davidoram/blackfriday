@@ -35,7 +35,7 @@ func LatexRenderer(flags int) Renderer {
 }
 
 // render code chunks using verbatim, or listings if we have a language
-func (options *Latex) BlockCode(out *bytes.Buffer, text []byte, lang string) {
+func (options *Latex) BlockCodeStart(out *bytes.Buffer, text []byte, lang string) {
 	if lang == "" {
 		out.WriteString("\n\\begin{verbatim}\n")
 	} else {
@@ -43,7 +43,15 @@ func (options *Latex) BlockCode(out *bytes.Buffer, text []byte, lang string) {
 		out.WriteString(lang)
 		out.WriteString("]\n")
 	}
+}
+
+// render code chunks using verbatim, or listings if we have a language
+func (options *Latex) BlockCodeBody(out *bytes.Buffer, text []byte, lang string) {
 	out.Write(text)
+}
+
+// render code chunks using verbatim, or listings if we have a language
+func (options *Latex) BlockCodeEnd(out *bytes.Buffer, text []byte, lang string) {
 	if lang == "" {
 		out.WriteString("\n\\end{verbatim}\n")
 	} else {
@@ -178,9 +186,15 @@ func (options *Latex) AutoLink(out *bytes.Buffer, link []byte, kind int) {
 	out.WriteString("}")
 }
 
-func (options *Latex) CodeSpan(out *bytes.Buffer, text []byte) {
+func (options *Latex) CodeSpanStart(out *bytes.Buffer, text []byte) {
 	out.WriteString("\\texttt{")
+}
+
+func (options *Latex) CodeSpanBody(out *bytes.Buffer, text []byte) {
 	escapeSpecialChars(out, text)
+}
+
+func (options *Latex) CodeSpanEnd(out *bytes.Buffer, text []byte) {
 	out.WriteString("}")
 }
 

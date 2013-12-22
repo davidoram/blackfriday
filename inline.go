@@ -141,7 +141,9 @@ func codeSpan(p *parser, out *bytes.Buffer, data []byte, offset int) int {
 
 	// render the code span
 	if fBegin != fEnd {
-		p.r.CodeSpan(out, data[fBegin:fEnd])
+		p.r.CodeSpanStart(out, data[fBegin:fEnd])
+		p.r.CodeSpanBody(out, data[fBegin:fEnd])
+		p.r.CodeSpanEnd(out, data[fBegin:fEnd])
 	}
 
 	return end

@@ -130,7 +130,9 @@ var blockTags = map[string]bool{
 // Currently Html and Latex implementations are provided
 type Renderer interface {
 	// block-level callbacks
-	BlockCode(out *bytes.Buffer, text []byte, lang string)
+	BlockCodeStart(out *bytes.Buffer, text []byte, lang string)
+	BlockCodeBody(out *bytes.Buffer, text []byte, lang string)
+	BlockCodeEnd(out *bytes.Buffer, text []byte, lang string)
 	BlockQuote(out *bytes.Buffer, text []byte)
 	BlockHtml(out *bytes.Buffer, text []byte)
 	Header(out *bytes.Buffer, text func() bool, level int)
@@ -146,7 +148,9 @@ type Renderer interface {
 
 	// Span-level callbacks
 	AutoLink(out *bytes.Buffer, link []byte, kind int)
-	CodeSpan(out *bytes.Buffer, text []byte)
+	CodeSpanStart(out *bytes.Buffer, text []byte)
+	CodeSpanBody(out *bytes.Buffer, text []byte)
+	CodeSpanEnd(out *bytes.Buffer, text []byte)
 	DoubleEmphasis(out *bytes.Buffer, text []byte)
 	Emphasis(out *bytes.Buffer, text []byte)
 	Image(out *bytes.Buffer, link []byte, title []byte, alt []byte)
