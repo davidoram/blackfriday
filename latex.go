@@ -17,6 +17,7 @@ package blackfriday
 
 import (
 	"bytes"
+	"github.com/davidoram/blackfriday/flower"
 )
 
 // Latex is a type that implements the Renderer interface for LaTeX output.
@@ -32,6 +33,14 @@ type Latex struct {
 // are defined).
 func LatexRenderer(flags int) Renderer {
 	return &Latex{}
+}
+
+func (options *Latex) CommandTagStart(out *bytes.Buffer, command flower.Command) {
+	// empty
+}
+
+func (options *Latex) CommandTagEnd(out *bytes.Buffer, command flower.Command) {
+	// empty
 }
 
 // render code chunks using verbatim, or listings if we have a language

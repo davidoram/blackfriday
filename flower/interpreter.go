@@ -37,19 +37,6 @@ func (interpreter *StandardInterpreter) EvaluateCode(line string) Command {
 	return command
 }
 
-// Surround HTML code with tags that can be used to identify and style the flower command contained within
-func (interpreter *StandardInterpreter) CommandTagStart(out *bytes.Buffer, command Command) {
-	if command != nil {
-		out.WriteString("<div cl=\""  + command.HtmlId() + "\">")
-	}
-}
-
-func (interpreter *StandardInterpreter) CommandTagEnd(out *bytes.Buffer, command Command) {
-	if command != nil {
-		out.WriteString("</div>")
-	}
-}
-
 
 // Return a summary of findings
 func (interpreter *StandardInterpreter) SummaryReport() []byte {

@@ -21,6 +21,7 @@ package blackfriday
 import (
 	"bytes"
 	"unicode/utf8"
+	"github.com/davidoram/blackfriday/flower"
 )
 
 const VERSION = "1.1"
@@ -129,6 +130,11 @@ var blockTags = map[string]bool{
 //
 // Currently Html and Latex implementations are provided
 type Renderer interface {
+
+	// Flower callbacks
+	CommandTagStart(out *bytes.Buffer, command flower.Command)
+	CommandTagEnd(out *bytes.Buffer, command flower.Command)
+
 	// block-level callbacks
 	BlockCodeStart(out *bytes.Buffer, text []byte, lang string)
 	BlockCodeBody(out *bytes.Buffer, text []byte, lang string)

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"github.com/davidoram/blackfriday/flower"
 )
 
 // Html renderer configuration options.
@@ -38,6 +39,7 @@ const (
 	HTML_USE_SMARTYPANTS                      // enable smart punctuation substitutions
 	HTML_SMARTYPANTS_FRACTIONS                // enable smart fractions (with HTML_USE_SMARTYPANTS)
 	HTML_SMARTYPANTS_LATEX_DASHES             // enable LaTeX-style dashes (with HTML_USE_SMARTYPANTS)
+	HTML_FLOWER             				  // enable Flower processing
 )
 
 // Html is a type that implements the Renderer interface for HTML output.
@@ -90,6 +92,20 @@ func HtmlRenderer(flags int, title string, css string) Renderer {
 		smartypants: smartypants(flags),
 	}
 }
+
+// Surround HTML code with tags that can be used to identify and style the flower command contained within
+func (options *Html) CommandTagStart(out *bytes.Buffer, command flower.Command) {
+	if command != nil {
+		out.WriteString("<div class=\""  + command.HtmlClass() + "\">")
+	}
+}
+
+func (options *Html) CommandTagEnd(out *bytes.Buffer, command flower.Command) {
+	if command != nil {
+		out.WriteString("</div>")
+	}
+}
+
 
 func attrEscape(out *bytes.Buffer, src []byte) {
 	org := 0
@@ -582,6 +598,14 @@ func (options *Html) Smartypants(out *bytes.Buffer, text []byte) {
 
 func (options *Html) DocumentHeader(out *bytes.Buffer) {
 	if options.flags&HTML_COMPLETE_PAGE == 0 {
+		if options.flags&HTML_FLOWER !=0 {
+			out.WriteString("<!DOCTYPE html>\n")
+			out.WriteString("<html>\n")
+			out.WriteString("<head>\n")
+			options.FlowerCSS(out)
+			out.WriteString("</head>\n")
+			out.WriteString("<body>\n")
+		}
 		return
 	}
 
@@ -614,10 +638,20 @@ func (options *Html) DocumentHeader(out *bytes.Buffer) {
 		out.WriteString(ending)
 		out.WriteString(">\n")
 	}
+	if options.flags&HTML_FLOWER !=0 {
+		options.FlowerCSS(out)
+	}
 	out.WriteString("</head>\n")
 	out.WriteString("<body>\n")
 
 	options.tocMarker = out.Len()
+}
+
+func (options *Html) FlowerCSS(out *bytes.Buffer) {
+	out.WriteString("<style>\n")
+	out.WriteString(".FLOWER-FAIL { color:red }\n")
+	out.WriteString(".FLOWER-OK { color:green }\n")
+	out.WriteString("</style>\n")
 }
 
 func (options *Html) DocumentFooter(out *bytes.Buffer) {

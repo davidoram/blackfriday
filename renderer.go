@@ -28,6 +28,16 @@ func WrappedRenderer(wrapped_renderer Renderer) Renderer {
 	}
 }
 
+// Surround HTML code with tags that can be used to identify and style the flower command contained within
+func (options *Flower) CommandTagStart(out *bytes.Buffer, command flower.Command) {
+	options.renderer.CommandTagStart(out, command)
+}
+
+func (options *Flower) CommandTagEnd(out *bytes.Buffer, command flower.Command) {
+	options.renderer.CommandTagEnd(out, command)
+}
+
+
 // block-level callbacks
 func (options *Flower) BlockCodeStart(out *bytes.Buffer, text []byte, lang string) {
 	options.renderer.BlockCodeStart(out, text, lang)
@@ -37,9 +47,9 @@ func (options *Flower) BlockCodeBody(out *bytes.Buffer, text []byte, lang string
 	lines := strings.Split(string(text[:]), "\n")
 	for _, line := range lines {
 		command := options.interpreter.EvaluateCode(line)
-		options.interpreter.CommandTagStart(out, command)
+		options.renderer.CommandTagStart(out, command)
 		options.renderer.BlockCodeBody(out, []byte(line), lang)
-		options.interpreter.CommandTagEnd(out, command)
+		options.renderer.CommandTagEnd(out, command)
 	}
 }
 
@@ -107,9 +117,9 @@ func (options *Flower) CodeSpanBody(out *bytes.Buffer, text []byte) {
 	lines := strings.Split(string(text[:]), "\n")
 	for _, line := range lines {
 		command := options.interpreter.EvaluateCode(line)
-		options.interpreter.CommandTagStart(out, command)
+		options.renderer.CommandTagStart(out, command)
 		options.renderer.CodeSpanBody(out, []byte(line))
-		options.interpreter.CommandTagEnd(out, command)
+		options.renderer.CommandTagEnd(out, command)
 	}
 }
 
@@ -158,6 +168,5 @@ func (options *Flower) DocumentHeader(out *bytes.Buffer) {
 	options.renderer.DocumentHeader(out)
 }
 func (options *Flower) DocumentFooter(out *bytes.Buffer) {
-	options.renderer.Entity(out, options.interpreter.SummaryReport())
 	options.renderer.DocumentFooter(out)
 }

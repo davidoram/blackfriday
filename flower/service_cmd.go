@@ -23,7 +23,6 @@ const (
 	FAIL      = 3
 )
 
-var nextHtmlId = 1
 
 type ServiceCommand struct {
 
@@ -43,9 +42,6 @@ type ServiceCommand struct {
 
 	// If an error occurs store it here
 	err error
-	
-	// HTML id
-	htmlId string
 }
 
 func NewServiceCommand(host string, service string, port int, caller string) *ServiceCommand {
@@ -56,13 +52,31 @@ func NewServiceCommand(host string, service string, port int, caller string) *Se
 	cmd.service = service
 	cmd.port = port
 	cmd.caller = caller
-	cmd.htmlId = "Flower-" + strconv.Itoa(nextHtmlId)
-	nextHtmlId += 1
 	return cmd
 }
 
-func (cmd *ServiceCommand) HtmlId() string {
-	return cmd.htmlId
+func (cmd *ServiceCommand) HtmlClass() string {
+	class := ""
+	switch cmd.match {
+	case MATCH_HOST:
+		class += "FLOWER-MATCH"
+	case MATCH_CALLER:
+		class += "FLOWER-MATCH"
+	case NO_MATCH:
+		class += "FLOWER-NO-MATCH"
+	}
+	class += " "
+	switch cmd.result {
+	case NO_ANSWER:
+		class += "FLOWER-NO-ANSWER"
+	case ERROR:
+		class += "FLOWER-ERROR"
+	case OK:
+		class += "FLOWER-OK"
+	case FAIL:
+		class += "FLOWER-FAIL"
+	}
+	return class
 }
 
 func (cmd *ServiceCommand) Execute() {
@@ -86,7 +100,7 @@ func (cmd *ServiceCommand) Execute() {
 		ps = portscanner.NewPortScanner(cmd.host)
 	} else if matchCaller {
 		cmd.match = MATCH_CALLER
-		ps = portscanner.NewPortScanner(cmd.caller)
+		ps = portscanner.NewPortScanner(cmd.host)
 	} else {
 		cmd.match = NO_MATCH
 		return
