@@ -76,6 +76,10 @@ func (cmd *ServiceCommand) HtmlClass() string {
 	case FAIL:
 		class += "FLOWER-FAIL"
 	}
+	
+	if cmd.err != nil {
+		class += " FLOWER-ERROR"
+	}
 	return class
 }
 
@@ -145,6 +149,7 @@ func (cmd *ServiceCommand) String() string {
 		str += "FAIL"
 	}
 	if cmd.err != nil {
+		str += ", error:"
 		str += cmd.err.Error()
 	}
 

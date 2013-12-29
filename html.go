@@ -96,7 +96,7 @@ func HtmlRenderer(flags int, title string, css string) Renderer {
 // Surround HTML code with tags that can be used to identify and style the flower command contained within
 func (options *Html) CommandTagStart(out *bytes.Buffer, command flower.Command) {
 	if command != nil {
-		out.WriteString("<div class=\""  + command.HtmlClass() + "\">")
+		out.WriteString("<div class=\""  + command.HtmlClass() + "\" title=\"" + command.String() + "\" >")
 	}
 }
 
@@ -649,8 +649,9 @@ func (options *Html) DocumentHeader(out *bytes.Buffer) {
 
 func (options *Html) FlowerCSS(out *bytes.Buffer) {
 	out.WriteString("<style>\n")
-	out.WriteString(".FLOWER-FAIL { color:red }\n")
-	out.WriteString(".FLOWER-OK { color:green }\n")
+	out.WriteString(".FLOWER-FAIL { color:red; }\n")
+	out.WriteString(".FLOWER-OK { color:green; }\n")
+	out.WriteString(".FLOWER-ERROR { background: red; color:green; }\n")
 	out.WriteString("</style>\n")
 }
 
