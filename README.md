@@ -23,13 +23,13 @@ tagged commit on github.
 
 With Go 1 and git installed:
 
-    go get github.com/russross/blackfriday
+    go get github.com/davidoram/blackfriday
 
 will download, compile, and install the package into your `$GOROOT`
 directory hierarchy. Alternatively, you can import it into a
 project:
 
-    import "github.com/russross/blackfriday"
+    import "github.com/davidoram/blackfriday"
 
 and when you build that project with `go build`, blackfriday will be
 downloaded and installed automatically.
@@ -53,7 +53,7 @@ implementations of `MarkdownBasic` and `MarkdownCommon` in
 You can also check out `blackfriday-tool` for a more complete example
 of how to use it. Download and install it using:
 
-    go get github.com/russross/blackfriday-tool
+    go get github.com/davidoram/blackfriday-tool
 
 This is a simple command-line tool that allows you to process a
 markdown file using a standalone program.  You can also browse the
