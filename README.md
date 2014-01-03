@@ -171,7 +171,28 @@ implements the following extensions:
 *   **Flower processing**, whereby code blocks containing lines that 
     start with the syntax `flower:` are evaluated as network specifications 
     to be tested if the `--flower` command line option has been included. 
-  
+    
+    Use the following syntax to verify that a given host provides a service:
+
+    ```
+		flower: localhost offers http
+		flower: localhost offers godoc:6060 
+		flower: smtp.gmail.com offers smtp
+
+  	```
+    Use the following syntax to verify that a host can access a service provided elsewhere:
+
+    ```
+		flower: localhost uses http at www.google.com
+		flower: localhost uses smtp at smtp.gmail.com   
+		flower: not.this.host uses http at smtp.gmail.com   
+		flower: localhost uses http at this.is.not.a.valid.host
+		flower: localhost uses 21 at www.google.com
+  	```
+	
+	Uses the `github.com/anvie/port-scanner` port scanner 	
+  	
+  	
 LaTeX Output
 ------------
 
